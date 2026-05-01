@@ -1,0 +1,536 @@
+# HOLLOW SHORE
+## Game Design Document
+### GBA Sandbox Survival RPG
+*v1.0 — Design Draft*
+
+---
+
+## Table of Contents
+
+1. [Premise](#premise)
+2. [World Structure & Map System](#world-structure--map-system)
+3. [The Three Preset World Maps](#the-three-preset-world-maps)
+4. [Controls](#controls)
+5. [Core Systems](#core-systems)
+6. [The Six Sanctums](#the-six-sanctums)
+7. [Endgame & Post-Game](#endgame--post-game)
+8. [Save System](#save-system)
+9. [GBA Technical Notes](#gba-technical-notes)
+
+---
+
+## Premise
+
+You are a survivor who washed ashore on **Hollow Shore** — a strange, living wilderness with no memory of how you arrived. Scattered across the land are six ancient **Sanctums**, each guarded by a powerful boss and hiding a piece of the **Tide Portal** that will carry you home. To survive long enough to find them all, you'll need to build, farm, craft, hunt, fish, and fight your way across an ever-darkening world.
+
+---
+
+## World Structure & Map System
+
+### 9-Section Grid
+
+The world is divided into a **3×3 grid of nine large sections**. The player spawns in the center section (Section 5). Each section is **160×160 tiles**, giving roughly 10+ screens of exploration space per section and a total world of 480×480 tiles — large by GBA standards.
+
+Sections load individually. When the player reaches the edge of their current section, a brief fade-to-black transition loads the adjacent section. Only one section is active in memory at a time. Timers for crops, resource respawns, and monster escalation continue ticking based on total in-game days elapsed, even while a section is unloaded.
+
+```
++------------------+------------------+------------------+
+|   SECTION 1      |   SECTION 2      |   SECTION 3      |
+|   [TUNDRA]       |   [HIGHLANDS]    |   [VOLCANIC]     |
+|                  |                  |                  |
+|  * Frostspire    |  * Bear Country  |  * Emberdepth    |
+|    (Sanctum 3)   |    (Rare Threat) |    (Sanctum 5)   |
++------------------+------------------+------------------+
+|   SECTION 4      |   SECTION 5      |   SECTION 6      |
+|   [COASTAL]      |   [FOREST HUB]   |   [MARSHLAND]    |
+|                  |                  |                  |
+|  * Tidecrypt     |  *** SPAWN ***   |  * Marshveil     |
+|    (Sanctum 2)   |    Safe Zone     |    (Sanctum 4)   |
++------------------+------------------+------------------+
+|   SECTION 7      |   SECTION 8      |   SECTION 9      |
+|   [DEEP FOREST]  |   [COASTAL]      |   [CORRUPTED]    |
+|                  |                  |                  |
+|  * Roothold      |  * Fishing Cove  |  * Hollow Throne |
+|    (Sanctum 1)   |    (Rich Fish)   |    (Sanctum 6)   |
++------------------+------------------+------------------+
+```
+
+### Section Transition Rules
+
+- Transitions trigger only at section edges — the player must deliberately walk there
+- Visual cues mark boundaries: thinning treelines, river crossings, mountain passes, fog banks
+- Each section saves its state independently: tile changes, placed structures, crop stages, chest contents, boss defeat flags
+- Only one section is held in VRAM at a time — clean memory management for GBA hardware
+- The center section (Section 5) is always the safest — gentle resources, closest to spawn
+- The Hollow Throne (Section 9) is diagonally opposite spawn — maximum distance, maximum tension
+
+### Section 5 — The Spawn Zone
+
+The center section is the player's home base. It features a neutral forest clearing with visible basic resources nearby. It has no Sanctum. Monster spawns here are always one tier below the current world escalation level, making it a reliable safe haven to return to. The player's first bed and first structures will almost always be built here.
+
+---
+
+## The Three Preset World Maps
+
+Hollow Shore ships with three hand-crafted world maps. On new game, the player selects a world (or it is chosen by seed number). All three share the same 3×3 section layout and Sanctum placement — what changes is the biome flavoring, terrain aesthetics, resource distribution, and named sub-locations within each section. This gives replayability without true procedural generation, which would exceed GBA RAM limits.
+
+---
+
+### World A — The Verdant Expanse
+
+*The most approachable of the three worlds. Dense forests in the south give way to rolling highlands in the center and harsh extremes at the edges. Resource nodes are generously distributed. Recommended for first playthroughs.*
+
+```
++-----------------+-----------------+-----------------+
+| Pine Tundra     | Frost Highlands | Cinder Wastes   |
+| [Frostspire S3] | [Bear Roams]    | [Emberdepth S5] |
++-----------------+-----------------+-----------------+
+| Cliff Coast     | Oak Clearing    | Bog Marshes     |
+| [Tidecrypt S2]  | *** SPAWN ***   | [Marshveil S4]  |
++-----------------+-----------------+-----------------+
+| Ancient Forest  | Sandy Shore     | Rot Badlands    |
+| [Roothold S1]   | [Fishing Cove]  | [H. Throne S6]  |
++-----------------+-----------------+-----------------+
+```
+
+| Section | Biome Name | Character | Notable Features |
+|---|---|---|---|
+| 1 (NW) | Pine Tundra | Sparse, icy, dangerous | Frozen ponds, rare Glacite Ore, Frostspire Sanctum |
+| 2 (N) | Frost Highlands | Cold, open, Bear territory | Bear spawns Day 5+, Highland Herbs, stone outcrops |
+| 3 (NE) | Cinder Wastes | Volcanic, hostile | Lava pools, Iron Ore veins, Emberdepth Sanctum |
+| 4 (W) | Cliff Coast | Rocky shores, fishing | Rich fishing, Coralite deposits, Tidecrypt Sanctum |
+| 5 (C) | Oak Clearing | Safe, lush, home base | Spawn point, mixed resources, gentle monster spawns |
+| 6 (E) | Bog Marshes | Murky, disorienting | Poison tiles, rare herbs, Marshveil Sanctum |
+| 7 (SW) | Ancient Forest | Dense, overgrown | Old ruins, rare Sap trees, Roothold Sanctum |
+| 8 (S) | Sandy Shore | Open, bright, coastal | Rich fishing cove, buried treasure tiles, kelp beds |
+| 9 (SE) | Rot Badlands | Corrupted, endgame | Dark Essence pools, corrupted enemies, Hollow Throne |
+
+---
+
+### World B — Shattered Isles
+
+*A more dramatic world with starker contrasts between sections. Water is more prominent — rivers and coastal reaches cut through more sections. Resource nodes are slightly sparser but higher quality deposits exist in unusual locations. Intermediate difficulty.*
+
+```
++-----------------+-----------------+-----------------+
+| Frozen Peaks    | Snowfield       | Lava Fields     |
+| [Frostspire S3] | [Ice Caves]     | [Emberdepth S5] |
++-----------------+-----------------+-----------------+
+| Sea Arch Coast  | River Delta     | Mangrove Swamp  |
+| [Tidecrypt S2]  | *** SPAWN ***   | [Marshveil S4]  |
++-----------------+-----------------+-----------------+
+| Thornwood       | Pebble Beach    | Dead Wastes     |
+| [Roothold S1]   | [Fishing Cove]  | [H. Throne S6]  |
++-----------------+-----------------+-----------------+
+```
+
+| Section | Biome Name | Character | Notable Features |
+|---|---|---|---|
+| 1 (NW) | Frozen Peaks | Vertical, treacherous | Mountain passages, Glacite veins, Frostspire Sanctum |
+| 2 (N) | Snowfield | Flat, exposed, blizzards | Ice caves as shelter, rare Crystal Shards, Bear territory |
+| 3 (NE) | Lava Fields | Barren, brutally hot | Obsidian deposits, Fire Imp density, Emberdepth Sanctum |
+| 4 (W) | Sea Arch Coast | Dramatic cliffs and caves | Sea caves, rich fishing arches, Tidecrypt Sanctum |
+| 5 (C) | River Delta | Wetland, fertile | Spawn point, excellent crop soil, river fishing access |
+| 6 (E) | Mangrove Swamp | Tangled, foggy | Shallow water tiles, rare Bog Wood, Marshveil Sanctum |
+| 7 (SW) | Thornwood | Dark canopy, hostile | Aggressive wildlife, dense wood, Roothold Sanctum |
+| 8 (S) | Pebble Beach | Open coast, windy | Treasure washing ashore mechanic, kelp, fishing |
+| 9 (SE) | Dead Wastes | Ashen, lifeless | No natural resources, high enemy density, Hollow Throne |
+
+---
+
+### World C — The Hollow Depths
+
+*The most challenging world. Harsher biomes start closer to spawn, resource nodes are rarer, and unique terrain features make navigation more demanding. Intended for experienced players seeking a harder run. Contains some exclusive sub-locations not found in the other worlds.*
+
+```
++-----------------+-----------------+-----------------+
+| Glacial Valley  | Howling Ridge   | Ash Flats       |
+| [Frostspire S3] | [Bear Den]      | [Emberdepth S5] |
++-----------------+-----------------+-----------------+
+| Shipwreck Coast | Mossy Glade     | Fungal Bogs     |
+| [Tidecrypt S2]  | *** SPAWN ***   | [Marshveil S4]  |
++-----------------+-----------------+-----------------+
+| Elder Forest    | Tidal Flats     | Corrupted Reach |
+| [Roothold S1]   | [Fishing Cove]  | [H. Throne S6]  |
++-----------------+-----------------+-----------------+
+```
+
+| Section | Biome Name | Character | Notable Features |
+|---|---|---|---|
+| 1 (NW) | Glacial Valley | Sunken, icy canyon | Glacial rivers blocking paths, Frostspire Sanctum |
+| 2 (N) | Howling Ridge | Windy plateau | Bear Den sub-location (Bear spawns Day 3+), rare Ore |
+| 3 (NE) | Ash Flats | Grey, visibility reduced | Ash storms reduce visibility, Emberdepth Sanctum |
+| 4 (W) | Shipwreck Coast | Debris-strewn shore | Shipwreck loot sub-location, hardest fishing, Tidecrypt |
+| 5 (C) | Mossy Glade | Overgrown, damp | Spawn point, mushroom crops available, dampened monster spawns |
+| 6 (E) | Fungal Bogs | Spore-filled, disorienting | Spore clouds drain stamina outdoors, Marshveil Sanctum |
+| 7 (SW) | Elder Forest | Ancient, maze-like | Labyrinthine tree layout, Elder Sap, Roothold Sanctum |
+| 8 (S) | Tidal Flats | Flooding sections | Tidal water covers paths twice per day, Fishing Cove |
+| 9 (SE) | Corrupted Reach | Fully hostile | Enemies spawn during the day, portal corruption visual, Hollow Throne |
+
+---
+
+## Controls
+
+| Input | Action |
+|---|---|
+| D-Pad | Grid movement / Menu navigation |
+| A Button | Interact / Confirm / Use tool |
+| B Button | Cancel / Back / Sprint (stamina cost) |
+| L Trigger | Cycle hotbar left |
+| R Trigger | Cycle hotbar right |
+| Start | Pause / Save menu |
+| Select | Open full inventory |
+| L + R | Quick-sleep shortcut if near a bed |
+
+---
+
+## Core Systems
+
+### Day / Night Cycle
+
+- 24 in-game hours per full cycle — approximately 1 real minute per in-game hour (24 min full day)
+- **Dawn (6AM):** Monsters retreat, animals appear, crops tick forward
+- **Day (6AM–8PM):** Safe exploration, farming, building, fishing
+- **Dusk (8PM):** Lighting becomes critical, monsters begin spawning at map edges
+- **Night (8PM–6AM):** Monsters fully active, Bear can roam after Day 5+
+- Sky color shifts gradually signal transitions — no clock on the HUD, player reads the sky
+- Weather is telegraphed the evening before by sky color and ambient wind sounds
+
+---
+
+### Stamina System
+
+- Stamina bar displayed beneath the health bar
+- Depleted by: sprinting (hold B), chopping trees, mining rocks, heavy combat swings
+- Regenerates slowly when standing still, faster when resting near a bed
+- Low stamina: tool swing speed reduces, sprint becomes unavailable
+- Food restores stamina alongside hunger — core incentive for cooking over raw eating
+- Craftable **Herb Pouch** (accessory slot) increases max stamina pool
+
+---
+
+### Hunger System
+
+- Hunger drains over time, faster during stamina-heavy activity
+- Stages: **Full → Satisfied → Hungry → Starving**
+- Starving: health drains slowly, stamina does not regenerate
+- Raw food gives minimal hunger value and risks a mild debuff (slowed stamina regen)
+- Cooked food gives full hunger value plus temporary stat buffs
+
+| Meal | Ingredients | Buff |
+|---|---|---|
+| Roast Meat | Meat + Fire | +Stamina regeneration rate |
+| Fish Stew | Fish + Herb + Water | +Max stamina temporarily |
+| Vegetable Soup | 2x Crop + Water | +Health regeneration |
+| Hunter's Feast | Meat + Crop + Herb | All stats briefly boosted |
+| Grilled Catch | Fish + Fire | Quick hunger fill, no buff |
+
+---
+
+### Inventory System
+
+- Base capacity: **16 slots**
+- Hotbar: **8 slots** visible at screen bottom, cycled with L/R triggers
+- **Upgrades:**
+  - Small Backpack (10 Leather + 5 Wood) → +8 slots
+  - Large Backpack (20 Leather + Iron Buckle) → +16 slots
+  - Explorer's Pack (rare depth materials) → +24 slots + map pocket
+- Auto-sort: Select + A in inventory screen
+- Items stack where logical: materials, seeds, food
+- Tab categories: **All / Tools / Materials / Food / Seeds / Equipment**
+
+---
+
+### Resource Gathering
+
+| Resource | Tool | Yields |
+|---|---|---|
+| Trees | Axe | Wood, Branches, Rare Sap |
+| Rocks | Pickaxe | Stone, Flint, Ore |
+| Grass / Soil | Shovel | Dirt, Clay, Seeds (random) |
+| Water tiles | Fishing Rod | Fish, Kelp, Treasure (rare) |
+| Bushes | Hands / Axe | Berries, Fiber, Twigs |
+| Deer / Rabbit | Bow / Sword | Meat, Leather, Bone |
+| Bear (rare) | Best weapons | Premium Leather, Bear Meat |
+
+- Resource nodes respawn after **3 in-game days**
+- Deeper / harsher biomes yield better materials — volcanic rock gives Iron Ore, tundra gives Crystal Shards
+- Rare resource variants glow faintly to distinguish them on the GBA screen
+
+---
+
+### Crafting System
+
+- Recipes **auto-unlock** when a new material is first picked up — no recipe hunting
+- Crafting stations required for advanced items:
+
+| Station | Unlocks |
+|---|---|
+| Hands (default) | Basic tools, campfire, rope, simple furniture |
+| Workbench | Furniture, backpacks, weapons, doors, fencing |
+| Forge | Metal tools, armor, metal building materials |
+| Cooking Fire / Stove | All meals and food items |
+| Alchemy Table | Potions, depth gear, portal components |
+
+---
+
+### Building System
+
+- All structures placed on the tile grid
+- **Place mode:** select item from hotbar, press A on target tile
+- **Break mode:** hold B on a placed structure to recover partial materials
+- **Upgrade in-place:** stand next to a wall, hold A with higher tier material
+
+**Wall Tiers:**
+
+| Tier | Material | Monster Resistance |
+|---|---|---|
+| 1 | Wood | Low — goblins breach in 3–4 hits |
+| 2 | Stone | Medium — requires sustained attack |
+| 3 | Brick | High — only late-game enemies breach |
+| 4 | Metal | Very High — effectively siege-proof |
+
+**Lighting as Defense:**
+- Torches, lanterns, and braziers prevent monster spawning within their light radius
+- Monsters avoid lit areas unless actively chasing the player
+- Light sources consume fuel over time — Wood (torch), Oil (lantern), Coal (brazier)
+- Wraiths and late-game enemies ignore light — endgame escalation threat
+
+**Flooring Types:**
+
+| Flooring | Category | Removed With |
+|---|---|---|
+| Wood Plank | Indoor | Shovel — returns partial wood |
+| Stone Tile | Indoor | Shovel — returns partial stone |
+| Wool Rug | Indoor | Hands — full return |
+| Gravel Path | Outdoor | Shovel — returns gravel |
+| Cobblestone | Outdoor | Shovel — returns partial stone |
+| Dirt Track | Outdoor | Shovel — no return |
+
+---
+
+### Farming System
+
+- Till soil with shovel on grass tiles → plant seeds → water daily → harvest after growth period
+- **Seasons** cycle every 7 in-game days:
+  - **Spring:** All crops grow normally
+  - **Summer:** Fast-growing crops, drought risk without daily watering
+  - **Autumn:** Root vegetables and grain thrive
+  - **Winter:** Only cold-resistant herbs survive without a Greenhouse structure
+- Crops die if unwatered 2 consecutive days
+- **Fence** protects crops from deer, rabbits, and slows monster pathing
+- **Scarecrow** (5 Wood + 5 Fiber) deters animals without requiring full fencing
+- High-tier meals require multiple crop types grown across several seasons — rewards long-term players
+
+---
+
+### Weather System
+
+Weather changes every 1–3 in-game days and is telegraphed the evening before by sky color and ambient wind sounds.
+
+| Weather | Effect |
+|---|---|
+| Rain | Auto-waters crops, slows player movement slightly, reduces night monster spawn rate |
+| Clear / Sunny | Crops dry faster, require manual watering or risk wilting |
+| Storm | Heavy rain, no monster spawns, structures take minor chip damage if untended |
+| Blizzard (Winter) | Heavy movement penalty outdoors, hunger drains faster, fires extinguish |
+
+---
+
+### Combat System
+
+**Weapons:**
+
+| Weapon | Type | Notes |
+|---|---|---|
+| Sword | Melee | Fast, short range, reliable |
+| Axe | Melee | Slower, higher damage, doubles as tree-chopping tool |
+| Bow + Arrow | Ranged | Arrows consumed on use, crafted from Wood + Feather |
+| Spear | Mid-range | Pierces through multiple enemies in a line |
+
+**Armor Tiers:**
+
+| Tier | Material | Defense |
+|---|---|---|
+| 1 | Leather | Basic — crafted from hunted animals |
+| 2 | Chain | Medium — Iron Rings at the Forge |
+| 3 | Iron | High — full Iron Ore processing |
+| 4 | Sanctum Alloy | Best — boss drops only |
+
+---
+
+### Monster Escalation
+
+- **Days 1–3:** Slimes, bats — low HP, no aggression at range, tutorial-level threats
+- **Days 4–7:** Wolves, goblins — chase player, begin attacking base structures
+- **Days 8–15:** Armored goblins, wraiths — wraiths ignore light, require weapons above a damage threshold
+- **Day 15+:** Siege events every 3rd night — coordinated monster waves target your base
+- **Bear:** Spawns randomly in northern sections after Day 5, patrols a territory, rare premium drops
+- Section 5 (spawn) always runs one tier below the current world escalation level
+
+---
+
+## The Six Sanctums
+
+Six ancient Sanctums are placed at the outer sections of the 3×3 grid, forming a wide circle around the player's spawn. Each is marked by a **visible landmark** from a distance — no quest markers, discovery is organic. Each contains a 3-floor dungeon, a boss, and a Portal Piece.
+
+| Sanctum | Section | Biome | Difficulty | Recommended Gear |
+|---|---|---|---|---|
+| 1 — The Roothold | 7 (SW) | Deep Forest | ★☆☆☆☆ | Basic Wood/Stone tools, Leather armor |
+| 2 — The Tidecrypt | 4 (W) | Coastal Shore | ★★☆☆☆ | Stone tools, Leather/Chain armor, Bow |
+| 3 — The Frostspire | 1 (NW) | Tundra | ★★★☆☆ | Iron tools, Chain armor, food buffs stocked |
+| 4 — The Marshveil | 6 (E) | Marshland | ★★★☆☆ | Iron tools, anti-poison potions, Spear |
+| 5 — The Emberdepth | 3 (NE) | Volcanic | ★★★★☆ | Full Iron/Sanctum armor, fire resistance potion |
+| 6 — The Hollow Throne | 9 (SE) | Corrupted | ★★★★★ | All 5 Portal Pieces + best available gear |
+
+---
+
+### Sanctum 1 — The Roothold *(Deep Forest, SW)*
+
+Ancient overgrown ruins buried in the deep forest. Designed as the player's first dungeon — teaches dungeon mechanics gently. **Landmark:** a massive moss-covered stone arch visible through the treeline.
+
+- **Floor 1 — Puzzle introduction:** Pressure plates open doors, spike tile hazards teach floor awareness
+- **Floor 2 — Ambush rooms:** Enemies hidden in breakable pots and crates, introduces chest looting
+- **Floor 3 — Boss: The Root Warden**
+  - A massive animated tree creature with a glowing core
+  - **Attacks:** Ground slam shockwave lines, spawns Vine Whips on flanks, briefly roots the player
+  - **Strategy:** Destroy Vine Whips first to stop constant chip damage, strike the core during arm recovery
+  - **Drop:** Verdant Shard (Portal Piece 1) + Bark Steel (mid-tier armor crafting material)
+
+---
+
+### Sanctum 2 — The Tidecrypt *(Coastal Shore, W)*
+
+A half-sunken ruin emerging from the ocean cliffs. Tidal water floods the lower floors on a timer. **Landmark:** a glowing stone spire jutting from the sea cliff, visible from the coastal section.
+
+- **Floor 1 — Tidal mechanics:** Water rises and falls on a timer, some floors only passable at low tide
+- **Floor 2 — Flooded corridors:** Swimmer enemies, air pocket navigation to avoid a drowning timer
+- **Floor 3 — Boss: The Drowned Warden**
+  - A massive coral-armored sea creature rising from a flooded chamber
+  - **Attacks:** Tidal wave sweeps the room pushing player into walls, spawns Tide Crawlers, ranged spits
+  - **Strategy:** Move perpendicular to avoid the wave, attack exposed underbelly after each sweep
+  - **Drop:** Tide Shard (Portal Piece 2) + Coralite (water-resistant armor coating material)
+
+---
+
+### Sanctum 3 — The Frostspire *(Tundra, NW)*
+
+A tall frozen tower jutting from the snowfield. Floors **ascend** rather than descend — the player climbs rather than digs. **Landmark:** the spire is visible from nearly any point in the tundra section.
+
+- **Floor 1 — Ice mechanics:** Slippery floor tiles create momentum sliding, enemies exploit this too
+- **Floor 2 — Frozen enemies:** Encased in ice blocks, usable as cover or breakable for loot
+- **Floor 3 — Boss: The Glacial Warden**
+  - An enormous ice elemental that reforms after being shattered
+  - **Attacks:** Freezes a floor section for 2 seconds, full-room charge, splits into two forms at 50% HP
+  - **Strategy:** Torch sword (fire-element weapon) deals bonus damage, must kill both split forms quickly or they recombine
+  - **Drop:** Frost Shard (Portal Piece 3) + Glacite Ore (high-defense armor material)
+
+---
+
+### Sanctum 4 — The Marshveil *(Marshland, E)*
+
+A sunken mausoleum half-swallowed by the bog. Fog reduces visibility and the layout is intentionally disorienting. **Landmark:** a ring of pale glowing stones visible through the bog fog.
+
+- **Floor 1 — Reduced visibility:** Fog of war via GBA hardware window feature, torch required to see
+- **Floor 2 — Mimics and hazards:** Mimic enemies disguised as chests, poison gas vents on floor tiles
+- **Floor 3 — Boss: The Bog Specter**
+  - A massive spectral figure that phases in and out of visibility
+  - **Attacks:** Turns invisible for 5 seconds then strikes from a random direction, poisons on hit, summons Miasma Clouds that shrink the safe area
+  - **Strategy:** Watch for floor ripple telegraphing reappearance position, anti-poison potion essentially mandatory
+  - **Drop:** Veil Shard (Portal Piece 4) + Spectral Dust (Alchemy Table upgrade material)
+
+---
+
+### Sanctum 5 — The Emberdepth *(Volcanic, NE)*
+
+A deep forge-temple carved into the volcano by an ancient civilization. Fire resistance potion is essentially mandatory. **Landmark:** a massive glowing volcanic vent surrounded by ancient carved pillars.
+
+- **Floor 1 — Lava tile hazards:** Crossing requires timing or stone bridge building (blocks carried in)
+- **Floor 2 — Forge Constructs:** Iron golems that require high damage threshold weapons to defeat
+- **Floor 3 — Boss: The Ember Titan**
+  - A towering armored construct of ancient iron and living lava
+  - **Attacks:** Lava pool creation covering tiles permanently until cooled, stomp shockwaves, ranged lava projectiles
+  - **Strategy:** Carry water flasks (craftable) to cool lava tiles and restore safe movement area
+  - **Drop:** Ember Shard (Portal Piece 5) + Magma Core (required for Sanctum Alloy armor)
+
+---
+
+### Sanctum 6 — The Hollow Throne *(Corrupted, SE)*
+
+The final Sanctum and the source of the corruption spreading across Hollow Shore. The entrance **only opens when all 5 Portal Pieces are in the player's inventory**. Enemies in this section spawn during the day as well as night. **Landmark:** the entire section glows with a sickly purple light visible from adjacent sections.
+
+- **Requirement:** All 5 Portal Pieces must be held to enter
+- **Floor 1 — Corruption zones:** Dark tiles drain health passively, must navigate around or sprint through
+- **Floor 2 — Echo enemies:** Corrupted reflections of the player mirroring movements with a delay
+- **Floor 3 — Boss: The Hollow Sovereign**
+  - The ancient entity that pulled the player to Hollow Shore — the true antagonist
+  - **Phase 1:** Summons corrupted versions of all previous boss types in sequence
+  - **Phase 2:** Direct combat — reality-warping attacks briefly invert controls, screen-filling corruption waves
+  - **Strategy:** Most complex fight in the game, requires full stamina management, food buffs, and best available armor
+  - **Drop:** The Hollow Keystone (Portal Piece 6) — combining all 6 pieces at the Alchemy Table completes the Tide Portal
+
+---
+
+## Endgame & Post-Game
+
+### Building the Tide Portal
+
+- All 6 Portal Pieces collected and combined at the Alchemy Table
+- Portal frame requires additional rare materials gathered across all biomes — incentivizes engaging with every major system
+- Placing the completed portal anywhere in Section 5 triggers the ending sequence
+- Credits roll with world seed and playtime displayed
+
+### Post-Game Sandbox Mode
+
+After the ending, the player may choose to **Leave** (end) or **Stay** (continue in sandbox mode).
+
+- Sandbox mode removes the portal goal — the world persists indefinitely
+- Monster escalation continues past Day 15+ siege events — ongoing survival challenge
+- All crafting, farming, and building remains fully available with no cap
+- Secondary cosmetic goal: fully upgrade the home base to Metal tier across all sections
+
+---
+
+## Save System
+
+- **Auto-save** triggers when sleeping in a bed (bed also skips time up to 12 hours, player's choice)
+- **Manual save** available from the pause menu at any time
+- Uses **128KB SRAM** cartridge — higher end but used by complex GBA titles like Golden Sun
+- Save data compressed aggressively: tile states stored as bitfields, structures encoded by type and tier
+- **One named save file** per cartridge — appropriate for GBA format
+- Save data includes: current section, inventory, world day count, all section tile states, boss defeat flags, current season, and weather state
+
+---
+
+## GBA Technical Notes
+
+Hollow Shore is designed to run within GBA hardware constraints. The following decisions reflect those constraints directly.
+
+**GBA Hardware Specs:**
+
+| Spec | Value |
+|---|---|
+| CPU | 32-bit ARM7TDMI @ 16.78 MHz |
+| RAM | 256KB internal + 32KB video RAM |
+| VRAM | 96KB total |
+| Screen | 240×160 pixels, 15-bit color |
+| Max Sprites | 128 on screen simultaneously |
+| Cart ROM | Up to 32MB |
+| Battery Save | 32KB–128KB SRAM via cartridge |
+
+**Feasibility Summary:**
+
+| System | Approach | Feasibility |
+|---|---|---|
+| Grid movement + top-down view | Native GBA tile engine — ideal fit | ✓ Perfect |
+| Tile-based building | Standard tile placement on background layer | ✓ Perfect |
+| Day/night cycle | Palette swapping — near-zero CPU cost | ✓ Easy |
+| Farming + crafting + inventory | Menu-driven logic, lightweight | ✓ Achievable |
+| Combat + enemy AI | Capped at 8–10 enemies on screen simultaneously | ✓ Achievable |
+| Weather effects | Palette shifts + single tiling overlay sprite | ✓ Achievable |
+| Dungeon fog of war | GBA hardware window feature — built-in masking | ✓ Hardware native |
+| Boss fights | One complex sprite, 2–3 secondary sprites | ✓ Manageable |
+| 9-section chunk loading | One section in VRAM at a time, fade-to-black transition | ✓ Clean solution |
+| 3 preset world maps | Replaces procedural generation — fits in ROM | ✓ Solves RAM limit |
+| Save system | 128KB SRAM + compressed bitfield encoding | ⚠ Needs 128KB cart |
+| Siege events | Capped wave sizes, staged spawns | ⚠ Enemy count managed |
