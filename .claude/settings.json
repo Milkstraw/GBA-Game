@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "defaultMode": "dontAsk",
+    "allow": [
+      "Bash(make *)",
+      "Bash(make)",
+      "Bash(arm-none-eabi-*)",
+      "Bash(gbafix *)",
+      "Bash(/c/devkitPro/*)",
+      "Bash(C:\\devkitPro\\*)"
+    ]
+  }
+}

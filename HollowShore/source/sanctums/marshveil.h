@@ -1,5 +1,7 @@
 #pragma once
 #include "sanctum.h"
+#include "bosses.h"
+#include "../systems/monsters.h"
 
 /* Sanctum 4 — The Marshveil (Marshland, E). Drops: Veil Shard + Spectral Dust */
 void marshveil_init(Sanctum *s);

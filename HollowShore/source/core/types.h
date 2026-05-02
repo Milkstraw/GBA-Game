@@ -12,6 +12,6 @@ typedef volatile u8   vu8;
 typedef volatile u16  vu16;
 typedef volatile u32  vu32;
 
-typedef u8 bool;
+#include <stdbool.h>
 #define TRUE  1
 #define FALSE 0

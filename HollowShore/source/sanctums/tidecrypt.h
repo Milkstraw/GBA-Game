@@ -1,5 +1,6 @@
 #pragma once
 #include "sanctum.h"
+#include "bosses.h"
 
 /* Sanctum 2 — The Tidecrypt (Coastal Shore, W). Drops: Tide Shard + Coralite */
 void tidecrypt_init(Sanctum *s);

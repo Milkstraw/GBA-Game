@@ -1,5 +1,7 @@
 #pragma once
 #include "sanctum.h"
+#include "bosses.h"
+#include "../systems/monsters.h"
 
 /* Sanctum 5 — The Emberdepth (Volcanic, NE). Drops: Ember Shard + Magma Core */
 void emberdepth_init(Sanctum *s);

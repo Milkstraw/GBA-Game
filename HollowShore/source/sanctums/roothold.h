@@ -1,5 +1,6 @@
 #pragma once
 #include "sanctum.h"
+#include "bosses.h"
 
 /* Sanctum 1 — The Roothold (Deep Forest, SW). Drops: Verdant Shard + Bark Steel */
 void roothold_init(Sanctum *s);

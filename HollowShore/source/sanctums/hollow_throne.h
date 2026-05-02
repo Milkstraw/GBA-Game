@@ -1,5 +1,7 @@
 #pragma once
 #include "sanctum.h"
+#include "bosses.h"
+#include "../systems/monsters.h"
 #include "../player/inventory.h"
 
 /* Sanctum 6 — The Hollow Throne (Corrupted, SE). Drops: Hollow Keystone (Portal Piece 6) */

@@ -1,5 +1,6 @@
 #pragma once
 #include "sanctum.h"
+#include "bosses.h"
 
 /* Sanctum 3 — The Frostspire (Tundra, NW). Drops: Frost Shard + Glacite Ore */
 void frostspire_init(Sanctum *s);

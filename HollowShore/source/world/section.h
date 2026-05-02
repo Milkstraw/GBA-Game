@@ -20,6 +20,8 @@ typedef struct {
     s16          cam_y;
 } Section;
 
+#include "transition.h"
+
 void section_load(u8 id, Section *out);
 void section_save_state(const Section *s);
 void section_set_tile(Section *s, u8 x, u8 y, TileType type);
