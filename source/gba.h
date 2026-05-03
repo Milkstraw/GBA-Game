@@ -47,6 +47,26 @@ static inline void vsync(void) {
     while (REG_VCOUNT <  160);
 }
 
+/* ---------- BG2 affine registers (Mode 3 viewport / screen shake) ---------- */
+#define REG_BG2PA (*(volatile s16*)0x04000020)
+#define REG_BG2PB (*(volatile s16*)0x04000022)
+#define REG_BG2PC (*(volatile s16*)0x04000024)
+#define REG_BG2PD (*(volatile s16*)0x04000026)
+#define REG_BG2X  (*(volatile s32*)0x04000028)
+#define REG_BG2Y  (*(volatile s32*)0x0400002C)
+
+/* ---------- PSG sound registers ---------- */
+#define REG_SOUNDCNT_X  (*(volatile u16*)0x04000084)
+#define REG_SOUNDCNT_L  (*(volatile u16*)0x04000080)
+#define REG_SOUND1CNT_L (*(volatile u16*)0x04000060)
+#define REG_SOUND1CNT_H (*(volatile u16*)0x04000062)
+#define REG_SOUND1CNT_X (*(volatile u16*)0x04000064)
+#define REG_SOUND2CNT_L (*(volatile u16*)0x04000068)
+#define REG_SOUND2CNT_H (*(volatile u16*)0x0400006C)
+
+/* ---------- SRAM (8-bit bus — must access one byte at a time) ---------- */
+#define SRAM_BASE ((volatile u8*)0x0E000000)
+
 /* ---------- Utility macros ---------- */
 #define ABS(x)          ((x) < 0 ? -(x) : (x))
 #define MIN(a, b)       ((a) < (b) ? (a) : (b))
