@@ -171,9 +171,10 @@ void text_init(void)
     /* BG3CNT: charblock 3, screenblock 30, 256x256, 4bpp */
     REG_BG3CNT = BG3CNT_TEXT_LAYER;
 
-    /* BG palette slot 0: colour 0 = transparent, colour 1 = white */
-    BG_PAL_BASE[0] = 0x0000u;
-    BG_PAL_BASE[1] = RGB15(31, 31, 31);
+    /* BG palette bank 1 (entries 16–17): 0 = transparent, 1 = white.
+     * Bank 0 is reserved for BG0 world tiles; using bank 1 avoids conflict. */
+    BG_PAL_BASE[16] = 0x0000u;
+    BG_PAL_BASE[17] = RGB15(31, 31, 31);
 
     /* Upload all 96 glyphs to charblock 3 (tile indices 0-95) */
     for (g = 0u; g < 96u; g++) {
@@ -201,7 +202,8 @@ void text_draw(u8 x, u8 y, const char *str)
         if (c >= 32 && c <= 127 && cx < 30u && cy < 20u) {
             u16 tile  = (u16)((u8)c - 32u);
             u16 index = (u16)(cy * 32u + cx);
-            SCREENBLOCK_30[index] = tile;
+            /* bits 15-12 = palette bank 1 */
+            SCREENBLOCK_30[index] = (u16)(tile | (1u << 12));
         }
         cx++;
         if (cx >= 30u) {

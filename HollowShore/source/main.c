@@ -348,6 +348,7 @@ int main(void) {
     oam_init();
     text_init();
     init_renderer();
+    load_tile_graphics();
     key_poll();         /* prime the key state */
     crafting_init();
     enemy_init_pool();

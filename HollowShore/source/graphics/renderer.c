@@ -56,7 +56,8 @@
  *   screenblock 8 (bits 12-8 = 0b01000),
  *   size 00 = 256×256 (bits 15-14 = 0).
  */
-#define BG0CNT_VALUE  ((u16)((8u << 8) | (0u << 2) | 0u))
+/* priority 1 so BG3 text layer (priority 0) renders on top */
+#define BG0CNT_VALUE  ((u16)((8u << 8) | (0u << 2) | 1u))
 
 /* ---- Public API ---------------------------------------------------------- */
 
@@ -68,12 +69,60 @@ void init_renderer(void)
     /* BG0: charblock 0, screenblock 8, 4bpp, 256×256 map */
     REG_BG0CNT = BG0CNT_VALUE;
 
-    /* Enable Mode 0 + BG0 + OBJ */
-    REG_DISPCNT = MODE0 | BG0_ENABLE | OBJ_ENABLE;
+    /* Enable Mode 0 + BG0 + BG3 (text layer) + OBJ */
+    REG_DISPCNT = MODE0 | BG0_ENABLE | BG3_ENABLE | OBJ_ENABLE;
 
     /* Reset scroll */
     REG_BG0HOFS = 0;
     REG_BG0VOFS = 0;
+}
+
+/*
+ * load_tile_graphics — write solid-color placeholder tiles for every TileType
+ * into charblock 0 and set palette bank 0 entries 1–TILE_COUNT.
+ *
+ * Each world tile type n is mapped to:
+ *   - charblock-0 hw tile index n  (a solid 4bpp 8×8 tile)
+ *   - palette bank 0 entry n+1     (the tile's display colour)
+ *
+ * Palette entry 0 is always transparent (0x0000).
+ *
+ * 4bpp solid-colour encoding: palette index p → each nibble = p →
+ *   byte = (p | p<<4), u32 = byte repeated 4×, 8 u32 rows per tile.
+ */
+void load_tile_graphics(void)
+{
+    static const u16 tile_colours[TILE_COUNT] = {
+        RGB15( 8, 20,  4),  /* TILE_GRASS      */
+        RGB15(18, 12,  6),  /* TILE_DIRT       */
+        RGB15( 2, 12, 28),  /* TILE_WATER      */
+        RGB15( 4, 14,  2),  /* TILE_TREE       */
+        RGB15(16, 16, 16),  /* TILE_ROCK       */
+        RGB15(12,  8,  4),  /* TILE_TILLED     */
+        RGB15(10, 24,  6),  /* TILE_CROP_1     */
+        RGB15(14, 26,  4),  /* TILE_CROP_2     */
+        RGB15(28, 24,  4),  /* TILE_CROP_3     */
+        RGB15(30, 12,  0),  /* TILE_LAVA       */
+        RGB15(18, 24, 30),  /* TILE_ICE        */
+        RGB15(18,  4, 20),  /* TILE_CORRUPTION */
+    };
+
+    u8 t;
+
+    MEM_PALETTE[0] = 0x0000u; /* transparent */
+    for (t = 0u; t < TILE_COUNT; ++t) {
+        MEM_PALETTE[t + 1u] = tile_colours[t];
+
+        /* Write solid-colour tile: palette index (t+1), 8 rows of 4 bytes */
+        vu32 *dst  = CHARBLOCK0 + (u32)t * 8u;
+        u8    idx  = (u8)(t + 1u);
+        u8    byte = (u8)(idx | (u8)(idx << 4u));
+        u32   fill = (u32)byte | ((u32)byte << 8u) |
+                     ((u32)byte << 16u) | ((u32)byte << 24u);
+        u8 row;
+        for (row = 0u; row < 8u; ++row)
+            dst[row] = fill;
+    }
 }
 
 /*
