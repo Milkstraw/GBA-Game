@@ -17,8 +17,8 @@
 /* -----------------------------------------------------------------------
  * Memory addresses
  * -------------------------------------------------------------------- */
-#define SCREENBLOCK_30   ((vu16*)0x06007800)
-#define CHARBLOCK_3_BASE ((vu16*)0x06018000)
+#define SCREENBLOCK_30   ((vu16*)0x0600F000)  /* SB 30: 0x06000000 + 30*2048 */
+#define CHARBLOCK_3_BASE ((vu16*)0x0600C000)  /* CB 3:  0x06000000 + 3*16384 */
 
 /* BG3CNT value: screenblock=30 (bits 8-12), charblock=3 (bits 2-3) */
 #define BG3CNT_TEXT_LAYER  ((u16)((30u << 8) | (3u << 2)))
