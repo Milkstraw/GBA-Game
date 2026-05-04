@@ -38,7 +38,12 @@ typedef signed int     s32;
 
 /* ----------------------------------------------------------------
  * Memory region base addresses and volatile pointers
- * PALRAM / VRAM / OAM — u16-wide bus (except OAM attr bytes)
+ *
+ * PALRAM  0x05000000 — 16-bit bus; 512 B (256 BG + 256 OBJ colours)
+ * VRAM    0x06000000 — 16-bit bus for BG charblocks (0–3),
+ *                      32-bit bus for OBJ charblocks (4–5)
+ * OAM     0x07000000 — 32-bit bus; u16 attribute writes are valid
+ *                      but always update via DMA or during VBlank
  * ---------------------------------------------------------------- */
 #define PALRAM_BASE  0x05000000
 #define VRAM_BASE    0x06000000
@@ -49,22 +54,25 @@ typedef signed int     s32;
 #define OAM     ((volatile u16*)OAM_BASE)
 
 /* ----------------------------------------------------------------
- * Key input (active-low: bit = 0 means pressed)
+ * Key input  (active-low: bit = 0 means pressed)
+ * Use KEYS_RAW() to snapshot once per frame into a local u16;
+ * do NOT call it multiple times per frame or compare frames.
  * ---------------------------------------------------------------- */
 #define REG_KEYINPUT  (*(volatile u16*)0x04000130)
 
-#define KEY_A       (1 << 0)
-#define KEY_B       (1 << 1)
-#define KEY_SELECT  (1 << 2)
-#define KEY_START   (1 << 3)
-#define KEY_RIGHT   (1 << 4)
-#define KEY_LEFT    (1 << 5)
-#define KEY_UP      (1 << 6)
-#define KEY_DOWN    (1 << 7)
-#define KEY_R       (1 << 8)
-#define KEY_L       (1 << 9)
+#define KEY_A       (1u << 0)
+#define KEY_B       (1u << 1)
+#define KEY_SELECT  (1u << 2)
+#define KEY_START   (1u << 3)
+#define KEY_RIGHT   (1u << 4)
+#define KEY_LEFT    (1u << 5)
+#define KEY_UP      (1u << 6)
+#define KEY_DOWN    (1u << 7)
+#define KEY_R       (1u << 8)
+#define KEY_L       (1u << 9)
 
-/* Invert active-low signal; result has 1 = pressed */
-#define KEYS_DOWN()  ((u16)(~REG_KEYINPUT & 0x03FF))
+/* Raw hardware read — inverts active-low, masks 10 valid bits.
+ * Result: 1 = pressed, 0 = released. */
+#define KEYS_RAW()  ((u16)(~REG_KEYINPUT & 0x03FFu))
 
 #endif /* GBA_TYPES_H */

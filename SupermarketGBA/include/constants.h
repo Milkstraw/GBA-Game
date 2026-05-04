@@ -8,7 +8,8 @@
  * ---------------------------------------------------------------- */
 #define SCREEN_W   240
 #define SCREEN_H   160
-#define HUD_H       10   /* top bar height in pixels; play area = 150px */
+#define HUD_H       10   /* top bar height in pixels */
+#define PLAY_H     (SCREEN_H - HUD_H)  /* 150px effective play area */
 
 #define TILE_W      16   /* meta-tile width  (4 × 8px hardware tiles) */
 #define TILE_H      16   /* meta-tile height (4 × 8px hardware tiles) */
