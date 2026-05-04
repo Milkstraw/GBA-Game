@@ -38,6 +38,10 @@ void tile_engine_init(void)
     /* BG3 — background decoration, drawn first (behind everything) */
     REG_BG3CNT = BG_PRIO(3) | BG_CBB(TE_CBB_BG3) | BG_SBB(TE_SBB_BG3)
                | BG_4BPP  | BG_REG_32x32;
+
+    /* Pin HUD at (0,0); set_scroll refuses BG0 writes so init owns this. */
+    REG_BG0HOFS = 0;
+    REG_BG0VOFS = 0;
 }
 
 /* ---------------------------------------------------------------------------
@@ -75,8 +79,7 @@ void tile_engine_set_scroll(u8 bg, s16 dx, s16 dy)
 {
     switch (bg & 3u) {
     case 0:
-        REG_BG0HOFS = (u16)dx;
-        REG_BG0VOFS = (u16)dy;
+        /* BG0 is the HUD — scroll is permanently locked at (0,0). */
         break;
     case 1:
         REG_BG1HOFS = (u16)dx;

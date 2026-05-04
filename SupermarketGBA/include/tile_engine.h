@@ -67,8 +67,8 @@ void tile_engine_load_map(const u8 *map_data, u16 w, u16 h, u8 bg_layer);
 
 /*
  * Set the horizontal and vertical scroll offsets for a BG layer.
- * Writes directly to BGxHOFS / BGxVOFS.  bg: 0–3.
- * BG0 (HUD) can be written but should stay at (0, 0).
+ * Writes directly to BGxHOFS / BGxVOFS.  bg: 1–3.
+ * BG0 (HUD) is ignored — scroll is locked to (0,0) by tile_engine_init.
  */
 void tile_engine_set_scroll(u8 bg, s16 dx, s16 dy);
 
