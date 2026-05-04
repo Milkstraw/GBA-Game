@@ -72,14 +72,14 @@ const u8 demo_map_bg1[150] = {
  * Each entry is the (col, row) of a tile the player faces when
  * standing directly south of the fixture.
  *
- * Shelf 1 (S1 at row 2, cols 3-5): player stands at row 3, cols 2-4.
- * Shelf 2 (S2 at row 2, cols 8-10): player stands at row 3, cols 7-9.
- * Shelf 3 (S3 at row 5, cols 3-5): player stands at row 6, cols 2-4.
+ * Shelf 1 (S1 at row 2, cols 3-5): player stands at row 3, cols 3-5.
+ * Shelf 2 (S2 at row 2, cols 8-10): player stands at row 3, cols 8-10.
+ * Shelf 3 (S3 at row 5, cols 3-5): player stands at row 6, cols 3-5.
  * Register (RG at row 8, col 7): single tile, player faces it directly.
  * ---------------------------------------------------------------- */
-const TileCoord SHELF1_TILES[SHELF1_COUNT] = {{2,3},{3,3},{4,3}};
-const TileCoord SHELF2_TILES[SHELF2_COUNT] = {{7,3},{8,3},{9,3}};
-const TileCoord SHELF3_TILES[SHELF3_COUNT] = {{2,6},{3,6},{4,6}};
+const TileCoord SHELF1_TILES[SHELF1_COUNT] = {{3,3},{4,3},{5,3}};
+const TileCoord SHELF2_TILES[SHELF2_COUNT] = {{8,3},{9,3},{10,3}};
+const TileCoord SHELF3_TILES[SHELF3_COUNT] = {{3,6},{4,6},{5,6}};
 const TileCoord REGISTER_TILE              = {7,8};
 
 /* ----------------------------------------------------------------
