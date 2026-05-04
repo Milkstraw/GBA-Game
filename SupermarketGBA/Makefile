@@ -49,7 +49,7 @@ LDFLAGS := $(ARCH) \
 # Sources → objects
 # Finds every .c under src/ recursively, mirrors tree in build/
 # ------------------------------------------------------------
-SRCS := $(shell find $(SRCDIR) -name '*.c')
+SRCS := $(shell find $(SRCDIR) -name '*.c' | sort)
 OBJS := $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(SRCS))
 DEPS := $(OBJS:.o=.d)
 

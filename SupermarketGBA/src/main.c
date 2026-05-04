@@ -2,7 +2,7 @@
 
 int main(void) {
     irq_init(NULL);
-    irq_enable(II_VBLANK);
+    irq_add(II_VBLANK, NULL);
 
     while (1) {
         VBlankIntrWait();
