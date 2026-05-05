@@ -35,6 +35,7 @@ CFLAGS := $(ARCH) \
           -fdata-sections \
           -Wall \
           -Wextra \
+          -Iinclude \
           -I$(TONC_INC)
 
 LDFLAGS := $(ARCH) \
