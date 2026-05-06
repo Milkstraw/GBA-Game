@@ -35,4 +35,26 @@ extern const TileCoord REGISTER_TILE;
  */
 void demo_map_load(void);
 
+/*
+ * Return the effective tile ID at tile position (x, y) for collision and
+ * interact checks.  BG1 (foreground: shelves, counter, register) takes
+ * priority over BG2 (floor/walls) when the BG1 entry is non-zero.
+ * Returns a solid tile ID (WC=16) for out-of-bounds coordinates.
+ */
+u8 map_tile_at(u8 x, u8 y);
+
+/*
+ * Mark a shelf's stock state as changed.  Updates the runtime map array and
+ * sets a dirty flag; the VRAM write is deferred to demo_map_flush_dirty()
+ * which must be called once at the start of the draw phase (inside VBlank).
+ * shelf_id: 0=S1, 1=S2, 2=S3.  stocked: 1=stocked (tile 40), 0=empty (tile 32).
+ */
+void demo_map_set_shelf_state(u8 shelf_id, u8 stocked);
+
+/*
+ * Flush any pending shelf-tile changes to VRAM.  Call once per frame,
+ * inside the VBlank window (right after VBlankIntrWait).
+ */
+void demo_map_flush_dirty(void);
+
 #endif /* DEMO_MAP_H */

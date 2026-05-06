@@ -1,5 +1,6 @@
 ifeq ($(strip $(DEVKITPRO)),)
-$(error DEVKITPRO is not set — source /etc/profile.d/devkit-env.sh or see devkitpro.org)
+# Fall back to local stub when devkitPro is not installed
+DEVKITPRO := $(CURDIR)/devkitpro
 endif
 
 # ------------------------------------------------------------

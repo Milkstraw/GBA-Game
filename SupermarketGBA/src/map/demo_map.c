@@ -1,5 +1,6 @@
 #include "demo_map.h"
 #include "tile_engine.h"
+#include "constants.h"
 
 /*
  * Short tile-ID aliases — local to this translation unit only.
@@ -83,16 +84,105 @@ const TileCoord SHELF3_TILES[SHELF3_COUNT] = {{3,6},{4,6},{5,6}};
 const TileCoord REGISTER_TILE              = {7,8};
 
 /* ----------------------------------------------------------------
+ * Mutable runtime copy of BG1 (foreground layer).
+ * Initialized from demo_map_bg1[] in demo_map_load().
+ * map_tile_at() and demo_map_set_shelf_state() operate on this copy.
+ * ---------------------------------------------------------------- */
+static u8 g_map_bg1_rt[MAP_W * MAP_H];
+
+/* ----------------------------------------------------------------
+ * map_tile_at — effective tile ID at (x, y) for collision / interact
+ * ---------------------------------------------------------------- */
+u8 map_tile_at(u8 x, u8 y)
+{
+    u8 fg, bg;
+    if (x >= MAP_W || y >= MAP_H) return WC;  /* treat OOB as solid wall */
+    fg = g_map_bg1_rt[(u16)y * MAP_W + x];
+    if (fg != FL) return fg;
+    bg = demo_map_bg2[(u16)y * MAP_W + x];
+    return bg;
+}
+
+/* ----------------------------------------------------------------
+ * Dirty flags and pending state for deferred VRAM shelf updates.
+ * Bit i of g_shelf_dirty is set when shelf i needs a VRAM flush.
+ * g_shelf_stocked[i] holds the target stocked value.
+ * ---------------------------------------------------------------- */
+static u8 g_shelf_dirty   = 0;
+static u8 g_shelf_stocked[3];
+
+/* ----------------------------------------------------------------
+ * demo_map_set_shelf_state — update runtime map array and set dirty flag.
+ * VRAM write is deferred to demo_map_flush_dirty().
+ * ---------------------------------------------------------------- */
+void demo_map_set_shelf_state(u8 shelf_id, u8 stocked)
+{
+    static const u8 shelf_row[3] = { 2, 2, 5 };
+    static const u8 shelf_col[3] = { 3, 8, 3 };
+    u8 new_tile = stocked ? S1 : SH;
+    u8 r = shelf_row[shelf_id];
+    u8 c = shelf_col[shelf_id];
+    u8 i;
+
+    if (shelf_id >= 3) return;
+
+    /* Update the mutable runtime map (no VRAM write here) */
+    for (i = 0; i < 3; i++) {
+        g_map_bg1_rt[(u16)r * MAP_W + c + i] = new_tile;
+    }
+
+    /* Record pending VRAM update */
+    g_shelf_stocked[shelf_id] = stocked;
+    g_shelf_dirty |= (u8)(1u << shelf_id);
+}
+
+/* ----------------------------------------------------------------
+ * demo_map_flush_dirty — write pending shelf tile changes to VRAM.
+ * Called once per frame inside the VBlank window.
+ * ---------------------------------------------------------------- */
+void demo_map_flush_dirty(void)
+{
+    static const u8 shelf_row[3] = { 2, 2, 5 };
+    static const u8 shelf_col[3] = { 3, 8, 3 };
+    u8 s;
+
+    if (!g_shelf_dirty) return;
+
+    for (s = 0; s < 3u; s++) {
+        if (g_shelf_dirty & (u8)(1u << s)) {
+            u8 new_tile = g_shelf_stocked[s] ? S1 : SH;
+            u8 r = shelf_row[s];
+            u8 c = shelf_col[s];
+            u8 i;
+            for (i = 0; i < 3u; i++) {
+                se_mem[TE_SBB_BG1][r][c + i] = (SCREENENTRY)new_tile;
+            }
+        }
+    }
+    g_shelf_dirty = 0;
+}
+
+/* ----------------------------------------------------------------
  * demo_map_load
  * ---------------------------------------------------------------- */
 void demo_map_load(void) {
+    u16 i;
+
+    /* Initialize the mutable BG1 runtime copy */
+    for (i = 0; i < MAP_W * MAP_H; i++) {
+        g_map_bg1_rt[i] = demo_map_bg1[i];
+    }
+
     /* Collision flags for every tile ID present in this map. */
     g_collision_flags[FL] = 0x00;
     g_collision_flags[WC] = COL_SOLID;
     g_collision_flags[WT] = COL_SOLID;
     g_collision_flags[WL] = COL_SOLID;
     g_collision_flags[WR] = COL_SOLID;
-    g_collision_flags[SH] = COL_SOLID;                         /* covers S3=32 */
+    /* SH (empty shelf face) gets INTERACT so player can stock it.
+     * The shelf HEADER (also tile 32, row 1) is unreachable from the player
+     * side because the shelf face at row 2 is solid, so no false interact. */
+    g_collision_flags[SH] = COL_SOLID|COL_INTERACT|COL_SHELF;  /* covers S3=32 */
     g_collision_flags[S1] = COL_SOLID|COL_INTERACT|COL_SHELF; /* covers S2=40 */
     g_collision_flags[CT] = COL_SOLID;
     g_collision_flags[RG] = COL_SOLID|COL_REGISTER;
