@@ -39,9 +39,13 @@ GBA bugs trace back to one line on that list.
   size and the corruption already logged; see
   `reference/hollowshore-notes.md` for what the checked-in
   `ConsoleLog` actually shows.
-- See `reference/butano.md` for how to actually get Butano into a
-  project (it is **not vendored in this repo** — see that file for why
-  and what command to run).
+- Butano is vendored at `external/butano` (git submodule). Run
+  `git submodule update --init external/butano` if the directory is
+  empty. See `reference/butano.md` for how to start a new game from
+  its template, and for why its own build system needs devkitARM or
+  Wonderful Toolchain — neither reachable from this sandboxed
+  environment, so Butano games build on a machine that actually has
+  devkitARM installed, not in a Claude Code web session.
 
 ## Toolchain
 
@@ -54,12 +58,14 @@ was confirmed to actually boot in mGBA). A SessionStart hook installs
 this automatically for new sessions.
 
 **Caveat:** this apt-based toolchain does not currently satisfy
-`BrickBreak`, `SupermarketGBA`, or `HollowShore`'s existing Makefiles —
-all three hard-require devkitPro's own `gba_rules`/`libgba`/`gbafix`,
-which aren't reachable here. It's proven for code that brings its own
-crt0/linker script (hand-rolled, or Butano's once vendored). See the
-"does NOT currently build" section of `reference/toolchain-setup.md`
-before assuming `make` works in one of the existing project folders.
+`BrickBreak`, `SupermarketGBA`, or `HollowShore`'s existing Makefiles,
+**or Butano's own build** — all require devkitPro's own
+`gba_rules`/`libgba`/`gbafix`/patched-GCC `.specs` files (or, for
+Butano, Wonderful Toolchain as an alternative), none of which are
+reachable here. It's proven only for code that brings its own
+hand-rolled crt0/linker script, like `gba-verify`'s test fixtures. See
+the "does NOT currently build" section of `reference/toolchain-setup.md`
+before assuming `make` works in any project folder in this repo.
 
 ## After writing code
 

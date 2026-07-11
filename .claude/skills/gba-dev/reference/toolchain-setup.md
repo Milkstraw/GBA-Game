@@ -62,24 +62,35 @@ install the apt package first, or just rerun `pip install mgba` after.
 ## Butano
 
 Not installable the same way — it's a source engine (C++), not a
-distro package. See `butano.md`.
+distro package, and (confirmed after vendoring it, see `butano.md`)
+its build system requires devkitARM or Wonderful Toolchain specifically
+— it does **not** build with plain apt `gcc-arm-none-eabi` the way the
+hand-rolled test-fixture ROMs below do. Both devkitARM's and Wonderful
+Toolchain's own package servers are blocked by this environment's
+network policy. See `butano.md` for exactly what's missing and why.
 
-## This does NOT currently build BrickBreak, SupermarketGBA, or HollowShore as-is
+## This does NOT currently build BrickBreak, SupermarketGBA, HollowShore, or Butano-based games as-is
 
 All three existing projects' Makefiles hard-require `DEVKITARM`/
 `DEVKITPRO` env vars and `include $(DEVKITARM)/gba_rules`
 (`BrickBreak`, `HollowShore`) or reference `$(DEVKITPRO)/devkitARM/bin/`
 and `$(DEVKITPRO)/tools/bin/gbafix` directly (`SupermarketGBA`).
-`BrickBreak` also links `-lgba` (devkitPro's `libgba`). None of
-`gba_rules`, `libgba`, `libtonc`, or `gbafix` are available through
-plain apt — they only exist behind the blocked `apt.devkitpro.org`
-server. So this apt-based toolchain compiles and links fine for code
-that brings its own crt0/linker script (a hand-rolled one, or Butano's
-own, once vendored) — confirmed working, see `verify_rom.py`'s test
-fixtures referenced in `gba-verify`'s `SKILL.md` — but it will **not**
-satisfy any of the three existing project Makefiles without either (a)
-getting real devkitPro binaries onto this machine from somewhere that
-can reach their server, or (b) rewriting those Makefiles to not depend
-on devkitPro-specific rules/libraries. Don't assume `make` works in
-those three project directories just because the compiler is installed
-— check first.
+`BrickBreak` also links `-lgba` (devkitPro's `libgba`). Butano's own
+build (`butano.mak`) requires `DEVKITARM` or `WONDERFUL_TOOLCHAIN` and
+errors out with neither — see `butano.md`. None of `gba_rules`,
+`libgba`, `libtonc`, `gbafix`, devkitARM's patched GCC `.specs` files,
+or Wonderful Toolchain are available through plain apt — they only
+exist behind the blocked `apt.devkitpro.org` / `wonderful.asie.pl`
+servers.
+
+So: this apt-based toolchain compiles and links fine for code that
+brings its own crt0/linker script from scratch (confirmed working, see
+`verify_rom.py`'s test fixtures referenced in `gba-verify`'s
+`SKILL.md`) — but it will **not** satisfy any of the four project
+build systems in this repo (the three existing ones, plus Butano) as
+they stand. Building any of them for real currently requires a machine
+with devkitARM actually installed (true of whoever built
+`BrickBreak`/`HollowShore` locally already). `gba-verify` still applies
+to whatever `.gba` comes out of that build, regardless of where it was
+compiled — it only needs the ROM file, not the build system that
+produced it.
