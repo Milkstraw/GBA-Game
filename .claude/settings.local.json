@@ -3,7 +3,8 @@
     "allow": [
       "Skill(update-config)",
       "mcp__Claude_Code_Remote__add_repo",
-      "Bash(mkdir -p /home/user/GBA-Game/.claude/hooks)"
+      "Bash(mkdir -p /home/user/GBA-Game/.claude/hooks)",
+      "mcp__Claude_Code_Remote__register_repo_root"
     ]
   }
 }
